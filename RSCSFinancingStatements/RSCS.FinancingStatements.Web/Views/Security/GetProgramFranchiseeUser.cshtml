@@ -1,0 +1,584 @@
+﻿@{
+    ViewData["Title"] = "GetFinPrograms";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script>
+
+    $(document).ready(function () {
+        var compareMsg = '@ViewData["Access"]';
+        if (compareMsg == "granted") {
+            alert("access granted");
+            Swal.fire(".");
+        }
+
+    });
+
+</script>
+<div class="row custom-row-control">
+    <div class="col-md-4 new-cus">
+        <div class="panel p-0">
+            <div class="gridItem">
+                <div>
+
+                    @(
+                        Html.Kendo().Grid<RSCS.FinancingStatements.Web.Models.References>().Name("gridFranchisee")
+                        .Scrollable(s => s.Height(388))
+                        @* .ToolBar(toolbar => toolbar.Custom()
+                    .IconClass("k-svg-icon k-svg-i-file-excel k-button-icon")
+                    .Text("Excel.")
+                    .HtmlAttributes(new { @class = "k-toolbar-tool k-grid-excel k-gridFranchisee-Export" }))*@
+                        .ToolBar(tools => tools.Excel()).Excel(excel => excel.AllPages(true).FileName("FinProgFranchiseeList.xlsx"))
+                        .ToolBar(tools => tools.Pdf()).Pdf(pdf => pdf.AllPages(true).FileName("FinProgFranchiseeList.Pdf"))
+
+                        .ToolBar(search => search.Search())
+                        .Columns(columns =>
+                        {
+
+                            columns.Bound(p => p.Reference).HtmlAttributes(new { @class = "clickable" }).Width(190);
+                            columns.Bound(p => p.Contacts).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+                            columns.Bound(p => p.AutoContacts).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+                            columns.Bound(p => p.AuthContacts).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Filterable(false).Width(100);
+                            columns.Bound(p => p.MasterID).Hidden(true).HeaderHtmlAttributes(new { @class = "", @style = "text-align:right;justify-content:right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+                        })
+                        .PersistSelection()
+                        .Filterable()
+                        .Selectable(selectable => selectable.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                        .Events(events => events.Change("onChangeFranchisee"))
+                        .Sortable()
+                        .Pageable(p =>
+                        {
+                            p.PageSizes(new[] { 5, 10, 20, 30, 40, 50 });
+                        })
+                        .Groupable()
+                        .DataSource(dataSource => dataSource
+                        .Ajax()
+                        .Read(read => read.Action("FetchFinprogFranchisee", "Security"))
+
+                        )
+                        )
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8 new-cus">
+        <div class="panel p-0">
+            <div class="gridItem">
+                <div>
+
+                    @(
+                        Html.Kendo().Grid<RSCS.FinancingStatements.Web.Models.Contacts>().Name("gridContacts")
+                        .Scrollable(s => s.Height(388))
+                        .ToolBar(toolbar => toolbar.Custom()
+                        .IconClass("k-svg-icon k-svg-i-file-excel k-button-icon")
+                        .Text("Excel.")
+                        .HtmlAttributes(new { @class = "k-toolbar-tool k-grid-excel k-gridContacts-Export" }))
+                        //.ToolBar(tools => tools.Excel()).Excel(excel => excel.AllPages(true).FileName("ContactsList.xlsx"))
+                        .ToolBar(tools => tools.Pdf()).Pdf(pdf => pdf.AllPages(true).FileName("ContactsList.Pdf"))
+                        .ToolBar(tools => tools.Custom().Text("Grant Access").HtmlAttributes(new { id = "grantAccess", @class = "btn btn-grant" }))
+                        .ToolBar(tools => tools.Custom().Text("Restrict Access").HtmlAttributes(new { id = "strictAccess", @class = "btn btn-restrict" }))
+                        .ToolBar(search => search.Search())
+                        .Columns(columns =>
+                        {
+                            columns.Select().Width(40);
+                            columns.Bound(p => p.Status).Width(110);
+                            columns.Bound(p => p.FOR).Width(80);
+                            columns.Bound(p => p.Contact).Width(200);
+                            columns.Bound(p => p.Title).Width(200);
+                            columns.Bound(p => p.RT).Width(200);
+                            columns.Bound(p => p.A).Width(60);
+                            columns.Bound(p => p.DateModified).Format("{0: MM/dd/yyyy}").Width(120);
+                            columns.Bound(p => p.CreateDate).Format("{0: MM/dd/yyyy}").Width(120);
+                            columns.Bound(p => p.ModBy).Width(100);
+                            columns.Bound(p => p.EMail).Width(200);
+                            columns.Bound(p => p.Phone).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(150);
+                            columns.Bound(p => p.NameID).Hidden(true).HeaderHtmlAttributes(new { @class = "", style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = " align-right" }).Width(100);
+
+                        })
+                        .PersistSelection()
+                        .Filterable()
+                        .Selectable(selectable => selectable.Mode(GridSelectionMode.Multiple).Type(GridSelectionType.Row))
+                        .Events(events => events.Change("onChangeContacts"))
+                        .Sortable()
+                        .Pageable(p =>
+                        {
+                            p.PageSizes(new[] { 5, 10, 20, 30, 40, 50 });
+                            p.Refresh(true);
+                        })
+                        .Groupable()
+                        .DataSource(dataSource => dataSource
+                        .Ajax()
+                        .Read(read => read.Action("FetchSecurtiyContacts", "Security").Data("GetMasterID"))
+
+                        )
+                        )
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var sMasterID = 320;
+    function GetMasterID() {
+        return { MasterID: sMasterID }
+
+    }
+    function onChangeFranchisee(e) {
+        var selectedRow = this.select();
+        var dataItem = this.dataItem(selectedRow);
+        var Franchisee = JSON.stringify(dataItem)
+        sMasterID = dataItem.MasterID;
+        var gridContacts = $("#gridContacts").data("kendoGrid");
+        gridContacts.dataSource.read({
+            MasterId: sMasterID
+        });
+    }
+    function onChangeContacts(e) {
+        //alert("2nd grid Row clicked..");
+    }
+    $(document).ready(function () {
+        $("#grantAccess").click(function () {
+            var grid = $("#gridContacts").data("kendoGrid");
+            var selectedRow = grid.select();
+            if (selectedRow.length < 1) {
+                Swal.fire('Please select atleast one contact.');
+            }
+            else {
+                var data = new Array();
+                for (let i = 0; i < selectedRow.length; i++) {
+                    var dataItem = grid.dataItem(selectedRow[i]);
+                    data.push({ NameID: dataItem.NameID, ResourceSecurityTypeID: 1, ResourceSecurityValue: "A", LastModifiedBy: null, Contact: dataItem.Contact });
+                }
+                var accesResquestParameter = JSON.stringify(data)
+                $.ajax({
+                    // url: '/Security/GrantOrRestrictAccess',
+                    url: '@Url.Action("GrantOrRestrictAccess", "Security")',
+                    type: 'POST',
+                    cache: false,
+                    traditional: true,
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "json",
+                    async: false,
+                    data: accesResquestParameter,
+                    success: function (response) { },
+                    error: function () { }
+                });
+                var gridContacts = $("#gridContacts").data("kendoGrid");
+                gridContacts.dataSource.read({
+                    MasterId: sMasterID
+                });
+                gridContacts.refresh();
+            }
+        });
+    });
+    $(document).ready(function () {
+        $("#strictAccess").click(function () {
+            var grid = $("#gridContacts").data("kendoGrid");
+            var selectedRow = grid.select();
+            if (selectedRow.length < 1) {
+                Swal.fire('Please select atleast one contact.');
+            }
+            else {
+                var data = new Array();
+                for (let i = 0; i < selectedRow.length; i++) {
+                    var dataItem = grid.dataItem(selectedRow[i]);
+                    data.push({ NameID: dataItem.NameID, ResourceSecurityTypeID: 1, ResourceSecurityValue: "I", LastModifiedBy: null, Contact: dataItem.Contact });
+                }
+                var accesResquestParameter = JSON.stringify(data)
+                $.ajax({
+                    url: '@Url.Action("GrantOrRestrictAccess", "Security")', // '/Security/GrantOrRestrictAccess',
+                    type: 'POST',
+                    cache: false,
+                    traditional: true,
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "json",
+                    async: false,
+                    data: accesResquestParameter,
+                    success: function (response) { },
+                    error: function () { }
+                });
+                var gridContacts = $("#gridContacts").data("kendoGrid");
+                gridContacts.dataSource.read({
+                    MasterId: sMasterID
+                });
+                gridContacts.refresh();
+            }
+
+        });
+    });
+
+    $(document).ready(function () {
+        // $("body").addClass("security");
+        //$(".col-md-8").show();
+        $(".k-grid-excel .k-button-text").text("Excel");
+        $(".k-grid-pdf .k-button-text").text("PDF");
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        var gridfranchise = $('#gridFranchisee').data('kendoGrid');
+        var gridContacts = $('#gridContacts').data('kendoGrid');
+
+        $("#cbx").click(function () {
+
+            if ($("input#cbx").is(":checked")) {
+                gridfranchise.showColumn('MasterID');
+                gridContacts.showColumn('NameID');
+            }
+            else {
+                gridfranchise.hideColumn('MasterID');
+                gridContacts.hideColumn('NameID');
+            }
+        });
+    });
+</script>
+
+@*Export to Excel Start*@
+<script>
+    //var iMasterID = null;
+    $(document).ready(function () {
+        $(".k-gridContacts-Export").click(function (e) {
+            var gridContacts = $("#gridContacts").data("kendoGrid");
+            var trs = $("#gridContacts").find('tr');
+            var exportAll = true;
+            //when show systems fields is active
+            if ($("input#cbx").is(":checked")) {
+                for (var i = 0; i < trs.length; i++) {
+                    if ($(trs[i]).find(":checkbox").is(":checked")) {
+                        exportAll = false; // At least one checkbox is selected, export selected rows
+                        break;
+                    }
+                }
+                var dataItems = null;
+                $.ajax({
+                    // url: '/Security/GrantOrRestrictAccess',
+                    url: '@Url.Action("FetchAllSecurtiyContacts", "Security")',
+                    type: 'GET',
+                    cache: false,
+                    traditional: true,
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "json",
+                    async: false,
+                    data: { MasterID: sMasterID },
+                    success: function (response) {
+                        dataItems = response;
+                    },
+                    error: function () { }
+                });
+                //export entire grid data to excel
+                if (exportAll) {
+          
+
+                    //export all data
+                    var allRows = [{
+                        cells: [
+
+                            { value: "Status" },
+                            { value: "FOR" },
+                            { value: "Contact" },
+                            { value: "Title" },
+                            { value: "RT" },
+                            { value: "A" },
+                            { value: "DateModified" },
+                            { value: "CreateDate" },
+                            { value: "ModBy" },
+                            { value: "EMail" },
+                            { value: "Phone" },
+                            { value: "NameID" }
+                        ]
+                    }];
+                    for (var i = 0; i < dataItems.length; i++) {
+
+                        var dataItem = dataItems[i];
+                        console.log(`${i}th data item is ${dataItem}`)
+                        allRows.push({
+                            cells: [
+                                { value: dataItem.Status },
+                                { value: dataItem.FOR },
+                                { value: dataItem.Contact },
+                                { value: dataItem.Title },
+                                { value: dataItem.RT },
+                                { value: dataItem.A },
+                                { value: dataItem.DateModified },
+                                { value: dataItem.CreateDate },
+                                { value: dataItem.ModBy },
+                                { value: dataItem.Email },
+                                { value: dataItem.Phone },
+                                { value: dataItem.NameID }
+                            ]
+                        });
+                    }
+                    excelExport(allRows);
+                }
+                else {
+                    //export selected Data
+                    var SelectedRows = [{
+                        cells: [
+                            { value: "Status" },
+                            { value: "FOR" },
+                            { value: "Contact" },
+                            { value: "Title" },
+                            { value: "RT" },
+                            { value: "A" },
+                            { value: "DateModified" },
+                            { value: "CreateDate" },
+                            { value: "ModBy" },
+                            { value: "EMail" },
+                            { value: "Phone" },
+                            { value: "NameID" }
+                        ]
+                    }];
+
+
+                    var grid = $("#gridContacts").data("kendoGrid");
+                    var selectedRow = grid.select();
+                    console.log(selectedRow);
+                    var dataItem = gridContacts.dataSource.data();
+                    for (var i = 0; i < trs.length; i++) {
+                        if ($(trs[i]).find(":checkbox").is(":checked")) {
+                            var selectedDataItem = gridContacts.dataItem(trs[i]);
+                            var CreateDate = selectedDataItem.CreateDate.toISOString();
+                            var DateModified = selectedDataItem.DateModified.toISOString();
+                            SelectedRows.push({
+                                cells: [
+                                    { value: selectedDataItem.Status },
+                                    { value: selectedDataItem.FOR },
+                                    { value: selectedDataItem.Contact },
+                                    { value: selectedDataItem.Title },
+                                    { value: selectedDataItem.RT },
+                                    { value: selectedDataItem.A },
+                                    { value: DateModified },
+                                    { value: CreateDate },
+                                    { value: selectedDataItem.ModBy },
+                                    { value: selectedDataItem.Email },
+                                    { value: selectedDataItem.Phone },
+                                    { value: selectedDataItem.NameID }
+                                ]
+                            });
+                        }
+                    }
+                    excelExport(SelectedRows);
+                }
+            }
+            //when show systems fields is inactive
+            else {
+                for (var i = 0; i < trs.length; i++) {
+                    if ($(trs[i]).find(":checkbox").is(":checked")) {
+                        exportAll = false; // At least one checkbox is selected, export selected rows
+                        break;
+                    }
+                }
+                var dataItems = null;
+                $.ajax({
+                    // url: '/Security/GrantOrRestrictAccess',
+                    url: '@Url.Action("FetchAllSecurtiyContacts", "Security")',
+                    type: 'GET',
+                    cache: false,
+                    traditional: true,
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "json",
+                    async: false,
+                    data: { MasterID: sMasterID },
+                    success: function (response) {
+                        dataItems = response;
+                    },
+                    error: function () { }
+                });
+                //export entire grid data to excel
+                if (exportAll) {
+            
+
+                    //export all data
+                    var allRows = [{
+                        cells: [
+
+                            { value: "Status" },
+                            { value: "FOR" },
+                            { value: "Contact" },
+                            { value: "Title" },
+                            { value: "RT" },
+                            { value: "A" },
+                            { value: "DateModified" },
+                            { value: "CreateDate" },
+                            { value: "ModBy" },
+                            { value: "EMail" },
+                            { value: "Phone" },
+
+                        ]
+                    }];
+                    for (var i = 0; i < dataItems.length; i++) {
+
+                        var dataItem = dataItems[i];
+                        console.log(`${i}th data item is ${dataItem}`)
+                        allRows.push({
+                            cells: [
+                                { value: dataItem.Status },
+                                { value: dataItem.FOR },
+                                { value: dataItem.Contact },
+                                { value: dataItem.Title },
+                                { value: dataItem.RT },
+                                { value: dataItem.A },
+                                { value: dataItem.DateModified },
+                                { value: dataItem.CreateDate },
+                                { value: dataItem.ModBy },
+                                { value: dataItem.Email },
+                                { value: dataItem.Phone },
+
+                            ]
+                        });
+                    }
+                    excelExport(allRows);
+                }
+                else {
+                    //export selected Data
+                    var SelectedRows = [{
+                        cells: [
+                            { value: "Status" },
+                            { value: "FOR" },
+                            { value: "Contact" },
+                            { value: "Title" },
+                            { value: "RT" },
+                            { value: "A" },
+                            { value: "DateModified" },
+                            { value: "CreateDate" },
+                            { value: "ModBy" },
+                            { value: "EMail" },
+                            { value: "Phone" },
+
+                        ]
+                    }];
+                    var grid = $("#gridContacts").data("kendoGrid");
+                    var selectedRow = grid.select();
+                   var dataItemss=[];
+                    for (let i = 0; i<selectedRow.length;i++){
+                        dataItemss.push(grid.dataItem(selectedRow[i]))
+                       
+                       
+                    }
+                    //console.log(dataItemss)
+                    //var dataItem = gridContacts.dataSource.data();
+                    //for (var i = 0; i < trs.length-1; i++) {
+                    //    if ($(trs[i]).find(":checkbox").is(":checked")) {
+                            
+                    //        var selectedDataItem = gridContacts.dataItem(trs[i]);
+                       for(let i=0;i<dataItemss.length;i++){
+                           var selectedDataItem=dataItemss[i];
+                        
+                        var modifiedDate = new Date();
+                        var CreateDate = selectedDataItem.CreateDate.toISOString();
+                        modifiedDate=selectedDataItem.DateModified.toISOString();
+                        
+                        SelectedRows.push({
+                            cells: [
+                                { value: selectedDataItem.Status },
+                                { value: selectedDataItem.FOR },
+                                { value: selectedDataItem.Contact },
+                                { value: selectedDataItem.Title },
+                                { value: selectedDataItem.RT },
+                                { value: selectedDataItem.A },
+                                { value: modifiedDate },
+                                { value: CreateDate },
+                                { value: selectedDataItem.ModBy },
+                                { value: selectedDataItem.Email },
+                                { value: selectedDataItem.Phone },
+
+                            ]
+                        });
+                       }
+                          
+                    //    }
+                    //}
+                    excelExport(SelectedRows);
+                }
+            }
+        });
+    }
+    )
+    function excelExport(rows) {
+        var headerStyle = {
+            background: "#808080", // Grey background color
+            color: "#FFFFFF",      // Text color for better contrast
+            bold: true             // Make the text bold
+        };
+        var headerRow = null;
+        //when show systems fields is active
+        if ($("input#cbx").is(":checked")) {
+            headerRow = {
+                cells: [
+                    { value: "Status", ...headerStyle },
+                    { value: "FOR", ...headerStyle },
+                    { value: "Contact", ...headerStyle },
+                    { value: "Title", ...headerStyle },
+                    { value: "RT", ...headerStyle },
+                    { value: "A", ...headerStyle },
+                    { value: "DateModified", ...headerStyle },
+                    { value: "CreateDate", ...headerStyle },
+                    { value: "ModBy", ...headerStyle },
+                    { value: "Email", ...headerStyle },
+                    { value: "Phone", ...headerStyle },
+                    { value: "NameID", ...headerStyle }
+
+                ]
+            };
+        }
+        //when show systems fields is inactive
+        else {
+            headerRow = {
+                cells: [
+                    { value: "Status", ...headerStyle },
+                    { value: "FOR", ...headerStyle },
+                    { value: "Contact", ...headerStyle },
+                    { value: "Title", ...headerStyle },
+                    { value: "RT", ...headerStyle },
+                    { value: "A", ...headerStyle },
+                    { value: "DateModified", ...headerStyle },
+                    { value: "CreateDate", ...headerStyle },
+                    { value: "ModBy", ...headerStyle },
+                    { value: "Email", ...headerStyle },
+                    { value: "Phone", ...headerStyle },
+
+
+                ]
+            };
+        }
+        rows[0] = headerRow;
+        var workbook = new kendo.ooxml.Workbook({
+            sheets: [
+                {
+                    columns: [
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true }
+                    ],
+                    title: "Contacts",
+                    rows: rows
+                }
+            ]
+        });
+        kendo.saveAs({ dataURI: workbook.toDataURL(), fileName: "Contacts.xlsx" });
+    }
+</script>
+<style>
+
+
+    .clickable:hover {
+        color: blue;
+        text-decoration: underline;
+    }
+
+</style>
+
+@*Export to Excel End*@
+
+
+
+
+

@@ -1,0 +1,120 @@
+﻿@{
+    Layout = null; // Remove the layout reference
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>GetFinPrograms - RSCS.FinancingStatements.Web</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="~/css/layout_css/main.css" rel="stylesheet" />
+    <link href="~/css/layout_css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <!-- <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" /> -->
+</head>
+<body>
+    <div class="d-none">
+        <div class="login">
+            <div class="row ">
+                <div class="col-md-6 rscs-logo-wrapper left-panel">
+                    <div class="logo-sec">
+                        <img src="images/RSCS-logo.png" alt="">
+                    </div>
+                </div>
+                <div class="col-md-6 form-wrapper right-panel">
+                    <div class="container forms-container">
+                        <h2>Login</h2>
+                        <p>Enter your Username and Password to sign in</p>
+                        <form action="" class="">
+                            <div class="input-field">
+                                <i class="fas fa-user"></i>
+                                <input type="text" placeholder="Username" />
+                            </div>
+                            <div class="input-field">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" placeholder="Password" />
+                            </div>
+                            <a href="">Forget Password ?</a>
+                            <button>Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="loginPage">
+        <div class="container-fluid">
+            <div class="row login-screen m-0">
+                <!--left panel-->
+                <div class="col-12 col-lg-5 col-md-5 left-panel d-flex align-items-center">
+                    <div class="row justify-content-md-center">
+                        <div class="col-12 col-md-10">
+                            <div class="logo-sec">
+                                <img src="/images/RSCS-logo-dark.png" alt="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--End left panel-->
+                <!--Right panel-->
+
+                <div class="col-12 col-lg-7 col-md-9 right-panel">
+                    <div class="logo-hide">
+                        <img src="/images/RSCS-logo-dark.png" alt="">
+                    </div>
+                    <!--Form content body-->
+                    <form name="LoginForm" id="LoginForm" method="post" asp-controller="Account" asp-action="Login">
+                        <div class="row justify-content-md-center">
+                          
+                            <div class="col-12 col-lg-7 col-md-10 align-middle bg-white">
+                                <div class="d-flex align-items-center form-container">
+
+                                    <div class="form-wrap">
+                                        <div class="row" style="margin-left: 0px;margin-bottom: 6px;max-width: 360px;">
+                                            <div class="col-12">
+                                                <p>
+                                                    <strong class="login-app-name">Login</strong>
+                                                </p>
+                                                <p class="text-p">Enter your username and password to sign in</p>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                                <input id="username" name="username" autocomplete="off" aria-labelledby="Username" autofocus="autofocus" class="form-control" placeholder="Enter Username" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                                <input id="password" name="password" class="form-control" aria-labelledby="Password" placeholder="Enter Password" type="password" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <a href="javascript:void(0);" class="blue-link" title="Forgot Password">Forgot Password ?</a>
+                                        </div>
+                                        <div class="form-group">
+                                            <button name="button" class="btn btn-submit" title="login">Login</button>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+                                        {
+                                         <div>
+                                         <p>@ViewBag.ErrorMessage</p>
+                                         </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                   
+                </div>
+           
+            </div>
+        </div>
+    </div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+</body>
+
+</html>

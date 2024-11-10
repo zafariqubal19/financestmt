@@ -1,0 +1,1124 @@
+﻿@{
+    ViewData["Title"] = "GetStatementsInvoice";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var ProgramID = TempData["FranchiseeProgramID"];
+    var MasterID = TempData["FranchiseeMasterID"];
+    ViewData["ProgramID"] = ProgramID;
+    ViewData["MasterID"] = MasterID;
+    var pageNumber = TempData["page"];
+}
+<script>
+    $(document).ready(function () {
+        var comboBox = $('#cmbFinprogram');
+        comboBox.val(@ViewData["ProgramID"]);
+    });
+</script>
+
+<script>
+    function onFgridDataBound(e) {
+        var selectedRowId = '@ViewData["MasterID"]';
+        if (selectedRowId) {
+            var grid = e.sender
+            var dataItems = grid.dataSource.data();
+            var selectedItem = dataItems.find(function (item) {
+                return item.MasterID == selectedRowId;
+            });
+            if (selectedItem) {
+                grid.select(grid.tbody.find("tr[data-uid='" + selectedItem.uid + "']"));
+            }
+        }
+    }
+</script>
+
+<div class="row custom-row-control">
+    <div class="col-md-3">
+        <div class="panel p-0">
+            <div class="dropdownItem lastScreen">
+                @(Html.Kendo().ComboBox()
+                    .Name("cmbFinprogram")
+                    .Label(label => label.Content(""))
+                    .Filter(FilterType.Contains)
+                    .DataTextField("Description")
+                    .DataValueField("ProgramID")
+                    .DataSource(dataSource =>
+                    {
+                        dataSource.Read("FetchFinprogramsDropdown", "Invoice");
+                    })
+                    .Events(e =>
+                    {
+                        e.Change("onChangeCombo").Select("onSelectCombo");
+                    })
+                    .Suggest(true)
+                    )
+            </div>
+            <div class="gridItem childBorder_00">
+                <div>
+                    @(
+                        Html.Kendo().Grid<RSCS.FinancingStatements.Web.Models.FinProgramsFranchisee>().Name("gridFranchisee")
+                        .Scrollable(s => s.Height(389))
+                        .Columns(columns =>
+                        {
+
+                            columns.Bound(p => p.Reference).HtmlAttributes(new { @class = "clickable" }).Width(200);
+                            columns.Bound(p => p.InvoiceAmount).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+                            columns.Bound(p => p.InvoiceStores).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(80);
+                            columns.Bound(p => p.Invoices).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(80);
+                            columns.Bound(p => p.InvoiceDateFrom).Width(140).Format("{0: MM/dd/yyyy}");
+                            columns.Bound(p => p.InvoiceDateTo).Width(120).Format("{0: MM/dd/yyyy}");
+                            columns.Bound(p => p.Statements).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(105);
+                            columns.Bound(p => p.StatementFrom).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+                            columns.Bound(p => p.StatementTo).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+                            columns.Bound(p => p.ProgramID).Hidden(true).HtmlAttributes(new { @class = "align-right" }).Width(80);
+                            columns.Bound(p => p.MasterID).Hidden(true).HtmlAttributes(new { @class = " align-right" }).Width(80);
+
+                        })
+
+                        .PersistSelection()
+
+                        .Selectable(selectable => selectable.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                        .Events(events => events.Change("onChangeGrid").DataBound("onFgridDataBound"))
+                        .Sortable()
+                        .Pageable(p =>
+                        {
+                            p.PageSizes(new[] { 5, 10, 20, 30, 40, 50 });
+                        })
+                        .Groupable()
+                        .Filterable()
+                        .DataSource(dataSource => dataSource
+                        .Ajax()
+                        // .Read(read => read.Action("FetchFinProgramsFranchisee", "Invoice", new { ProgramID = ProgramID }))
+                        .Read(read => read.Action("FetchFinProgramsFranchisee", "Invoice", new { ProgramID = ProgramID, PN = pageNumber }))
+                        )
+                        )
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="col-md-2 custom-col">
+        <div class="gridItem">
+            <div>
+                @(
+                    Html.Kendo().Grid<RSCS.FinancingStatements.Web.Models.StatementDetails>().Name("gridStatement")
+                    .Scrollable(s => s.Height(408))
+                    .ToolBar(tools => tools.Custom().Text("Open").HtmlAttributes(new { id = "openStatement", @class = "btn btn-red" }))
+                    .ToolBar(tools => tools.Custom().Text("Print").HtmlAttributes(new { id = "printStatement", @class = "btn btn-primary" }))
+                    //.ToolBar(tools => tools.Excel()).Excel(excel => excel.AllPages(true).FileName("StatementList.xlsx"))
+                    .ToolBar(toolbar => toolbar.Custom()
+                    .IconClass("k-svg-icon k-svg-i-file-excel k-button-icon")
+                    .Text("Excel.")
+                    .HtmlAttributes(new { @class = "k-toolbar-tool k-grid-excel k-gridStatement-Export" }))
+                    .Columns(columns =>
+                    {
+                        columns.Select().Width(32);
+                        columns.Bound(p => p.Statement).Width(100);
+                        columns.Bound(p => p.Program).Width(120);
+                        columns.Bound(p => p.FileName).Hidden(true).Width(100);
+                        columns.Bound(p => p.FilePath).Hidden(true).HtmlAttributes(new { @class = " align-right" }).Width(130);
+                        columns.Bound(p => p.DateAdded).Hidden(true).HtmlAttributes(new { @class = " align-right" }).Format("{0: MM/dd/yyyy}").Width(100);
+                        columns.Bound(p => p.QARoot).Hidden(true).HtmlAttributes(new { @class = "" }).Width(100);
+                        columns.Bound(p => p.ProdRoot).Hidden(true).HtmlAttributes(new { @class = " align-right" }).Width(100);
+                        columns.Bound(p => p.StatementID).Hidden(true).HeaderHtmlAttributes(new { @class = "", style = "text-align: right; justify-content: right" }).Width(100);
+                        columns.Bound(p => p.ProgramID).Hidden(true).HeaderHtmlAttributes(new { @class = "", style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+                        columns.Bound(p => p.FranchiseeID).Hidden(true).Width(100);
+                        columns.Bound(p => p.MasterID).Hidden(true).HeaderHtmlAttributes(new { @class = "", style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+
+
+                    })
+                    .Scrollable()
+                    .PersistSelection()
+                    .Filterable()
+                    .Selectable()
+                    .Selectable(selectable => selectable.Mode(GridSelectionMode.Multiple).Type(GridSelectionType.Row))
+                    .Sortable()
+                    .Pageable(p =>
+                    {
+                        p.PageSizes(new[] { 5, 10, 20, 30, 40, 50 });
+                    })
+                    .Groupable()
+                    .DataSource(dataSource => dataSource
+                    .Ajax()
+                    // .Read(read => read.Action("FetchStatementDetails", "Invoice", new { ProgramId = ProgramID, MasterId = MasterID }))
+                    .Read(read => read.Action("FetchStatementDetails", "Invoice").Data("GetProgramMasterID"))
+                    )
+                    )
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="gridItem">
+            <div>
+                @(
+                    Html.Kendo().Grid<RSCS.FinancingStatements.Web.Models.InvoiceDetails>().Name("gridInvoice")
+                    .Scrollable(s => s.Height(388))
+                    .ToolBar(tools => tools.Custom().Text("Open").HtmlAttributes(new { id = "openInvoice", @class = "btn btn-red" }))
+                    .ToolBar(tools => tools.Custom().Text("Print").HtmlAttributes(new { id = "printInvoice", @class = "btn btn-primary" }))
+                    .ToolBar(tools => tools.Custom().Text("Selected $$$").HtmlAttributes(new { id = "openPopup", @class = "btn btn-orange" }))
+                    //.ToolBar(tools => tools.Excel()).Excel(excel => excel.AllPages(true).FileName("InvoiceList.xlsx"))
+                    .ToolBar(toolbar => toolbar.Custom()
+                    .IconClass("k-svg-icon k-svg-i-file-excel k-button-icon")
+                    .Text("Excel.")
+                    .HtmlAttributes(new { @class = "k-toolbar-tool k-grid-excel k-gridInvoice-Export" }))
+                    .Columns(columns =>
+                    {
+                        columns.Select().Width(40);
+                        columns.Bound(p => p.InvoiceNo).Width(105);
+                        columns.Bound(p => p.InvoiceDate).Format("{0: MM/dd/yyyy}").Width(120);
+                        columns.Bound(p => p.TotalAmount).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Filterable(false).Width(100);
+                        columns.Bound(p => p.ViewCount).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(70);
+                        columns.Bound(p => p.BilltoCustomerNo).Filterable(false).Width(130);
+                        columns.Bound(p => p.BilltoName).Width(150);
+                        columns.Bound(p => p.SelltoCustomerNo).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(130);
+                        columns.Bound(p => p.StoreID).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(110);
+                        columns.Bound(p => p.SelltoCustomerName).Width(100);
+                        columns.Bound(p => p.SelltoAddress).Width(130);
+                        columns.Bound(p => p.SelltoCity).Width(110);
+                        columns.Bound(p => p.SelltoState).Width(90);
+                        columns.Bound(p => p.SelltoZip).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Filterable(false).Width(70);
+                        columns.Bound(p => p.FilePath).Hidden(true).Width(120);
+                        columns.Bound(p => p.OrigFilePath).Hidden(true).Width(130);
+                        columns.Bound(p => p.Copied).Hidden(true).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+                        columns.Bound(p => p.ProgramID).Hidden(true).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+                        columns.Bound(p => p.masterID).Hidden(true).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+                        columns.Bound(p => p.FranchiseeID).Hidden(true).Width(100);
+                    })
+                    .PersistSelection()
+                    .Filterable()
+                    .Selectable()
+                    .Selectable(selectable => selectable.Mode(GridSelectionMode.Multiple).Type(GridSelectionType.Row))
+                    .Events(events => events.Change("onSelectInvoice"))
+                    .Sortable()
+                    .Pageable(p =>
+                    {
+                        p.PageSizes(new[] { 5, 10, 20, 30, 40, 50 });
+                    })
+                    .Groupable()
+                    .DataSource(dataSource => dataSource
+                    .Ajax()
+                    //.Read(read => read.Action("FetchInvoiceDetails", "Invoice", new { ProgramId = ProgramID, MasterId = MasterID }))
+                    .Read(read => read.Action("FetchInvoiceDetails", "Invoice").Data("GetProgramMasterID"))
+                    )
+                    )
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    var cmbValue;
+    var MasterID;
+    var ProgramID;
+    function onChangeCombo() {
+        MasterID = @ViewData["MasterID"];
+        //window.location.href = "/Invoice/GetStatementsInvoice/?ProgramID=" + cmbValue + "&MasterID=" + MasterID;
+        window.location.href = '@Url.Action("GetStatementsInvoice", "Invoice")?ProgramID=' + cmbValue + '&MasterID=' + MasterID;
+    }
+    MasterID = @ViewData["MasterID"];
+    ProgramID = @ViewData["ProgramID"];
+    function GetProgramMasterID() {
+
+        return { MasterID: MasterID, ProgramID: ProgramID }
+
+    }
+
+    function onSelectCombo(e) {
+        if (e.item) {
+            var dataItem = this.dataItem(e.item.index());
+            cmbValue = dataItem.ProgramID;
+        }
+        else {
+            Swal.fire("Please select item from the list..");
+        }
+
+    }
+
+    function onChangeGrid(e) {
+        var selectedRow = this.select();
+        var dataItem = this.dataItem(selectedRow);
+        var Franchisee = JSON.stringify(dataItem)
+        ProgramID = dataItem.ProgramID;
+        MasterID = dataItem.MasterID;
+        var sReference = dataItem.Reference;
+        //window.location.href = "/Invoice/GetStatementsInvoice/?ProgramID=" + ProgramID + "&MasterID=" + MasterID;
+        // window.location.href = '@Url.Action("GetStatementsInvoice", "Invoice")?ProgramID=' + ProgramID + '&MasterID=' + MasterID;
+        var gridContacts = $("#gridStatement").data("kendoGrid");
+        gridContacts.dataSource.read({
+            MasterId: MasterID
+        });
+        var gridStatement = $("#gridInvoice").data("kendoGrid");
+        gridStatement.dataSource.read({
+            MasterId: MasterID
+        });
+
+    }
+
+
+
+    function onSelectInvoice(e) {
+        var grid = $("#gridInvoice").data("kendoGrid");
+        var selectedRow = grid.select();
+        if (selectedRow.length > 1) {
+            var Amount = 0;
+            var dataItem = [];
+            for (let i = 0; i < selectedRow.length; i++) {
+                Amount = Amount + grid.dataItem(selectedRow[i]).TotalAmount;
+            }
+            document.getElementById("popupInput").innerHTML = "$" + Amount.toFixed(2)
+            $("#myModal").show();
+            $(".modal").addClass("show");
+            $("#openPopup").hide();
+        }
+        if (selectedRow.length <= 1) {
+            $("#myModal").hide();
+            $("#openPopup").show();
+
+        }
+
+    }
+
+</script>
+
+
+<script>
+    $(document).ready(function () {
+        $("#openPopup").click(function () {
+            var grid = $("#gridInvoice").data("kendoGrid");
+            var selectedRow = grid.select();
+            var Amount = 0;
+            var dataItem = [];
+            for (let i = 0; i < selectedRow.length; i++) {
+                Amount = Amount + grid.dataItem(selectedRow[i]).TotalAmount;
+            }
+            document.getElementById("popupInput").innerHTML = "$" + Amount.toFixed(2)
+            $(this).hide();
+            $("#myModal").show();
+            $(".modal").addClass("show");
+
+        });
+        $(".btn-close").click(function () {
+            $("#myModal").hide();
+            $("#openPopup").show();
+        })
+        $(".k-grid-excel .k-button-text").text("Excel");
+    });
+
+
+    $(document).ready(function () {
+        $("#openInvoice").click(function () {
+            var grid = $("#gridInvoice").data("kendoGrid");
+            var selectedRow = grid.select();
+            if (selectedRow.length == 1) {
+                var dataItem = grid.dataItem(selectedRow[0]);
+                var FilePath = dataItem.OrigFilePath;
+                var action = '@Url.Action("OpenPDF", "Invoice")';
+                var form = $('<form action="' + action + '" method="post" target="_blank"></form>');
+                form.append($('<input type="hidden" name="FilePath" value="' + FilePath + '" />'));
+                $('body').append(form);
+                form.submit();
+            } else {
+                if (selectedRow.length < 1) {
+                    Swal.fire('Please select any row to open invoice');
+                } else {
+                    Swal.fire("Please select only one row to open invoice");
+                }
+            }
+        });
+
+    });
+
+    $(document).ready(function () {
+        $("#openStatement").click(function () {
+            var grid = $("#gridStatement").data("kendoGrid");
+            var selectedRow = grid.select();
+            if (selectedRow.length == 1) {
+                var dataItem = grid.dataItem(selectedRow[0]);
+                var FilePath = dataItem.QARoot + dataItem.FilePath;
+                var action = '@Url.Action("OpenPDF", "Invoice")';
+                var form = $('<form action="' + action + '" method="post" target="_blank"></form>');
+                form.append($('<input type="hidden" name="FilePath" value="' + FilePath + '" />'));
+                $('body').append(form);
+                form.submit();
+            }
+            else {
+                if (selectedRow.length < 1) {
+                    Swal.fire('Please select any row to open statement.')
+                }
+                else {
+                    Swal.fire("Please select only one row to open statement");
+                }
+
+            }
+        });
+
+    });
+</script>
+
+<script>
+
+    $(document).ready(function () {
+        $("#printInvoice").click(function () {
+            var grid = $("#gridInvoice").data("kendoGrid");
+            var selectedRow = grid.select();
+            if (selectedRow.length === 1) {
+                var dataItem = grid.dataItem(selectedRow[0]);
+                var FilePath = dataItem.OrigFilePath;
+                var url = '@Url.Action("OpenPDF", "Invoice")?FilePath=' + FilePath;
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.responseType = 'blob';
+                xhr.onload = function (e) {
+                    if (this.status === 200) {
+                        var blob = new Blob([this.response], { type: 'application/pdf' });
+                        var url = URL.createObjectURL(blob);
+                        var printWindow = window.open(url, "_blank");
+                        printWindow.addEventListener("load", function () {
+                            printWindow.print();
+                        });
+                    }
+                };
+                xhr.send();
+            } else {
+                if (selectedRow.length < 1) {
+                    Swal.fire('Please select any row to print invoice');
+                } else {
+                    Swal.fire("Please select only one row to print invoice");
+                }
+            }
+        });
+    });
+
+    $(document).ready(function () {
+        $("#printStatement").click(function () {
+            var grid = $("#gridStatement").data("kendoGrid");
+            var selectedRow = grid.select();
+            if (selectedRow.length === 1) {
+                var dataItem = grid.dataItem(selectedRow[0]);
+                var FilePath = dataItem.QARoot + dataItem.FilePath;
+                var url = '@Url.Action("OpenPDF", "Invoice")?FilePath=' + FilePath;
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.responseType = 'blob';
+                xhr.onload = function (e) {
+                    if (this.status === 200) {
+                        var blob = new Blob([this.response], { type: 'application/pdf' });
+                        var url = URL.createObjectURL(blob);
+                        var printWindow = window.open(url, "_blank");
+                        printWindow.addEventListener("load", function () {
+                            printWindow.print();
+                        });
+                    }
+                };
+                xhr.send();
+            } else {
+                if (selectedRow.length < 1) {
+                    Swal.fire('Please select any row to print statement');
+                } else {
+                    Swal.fire("Please select only one row to print statement");
+                }
+            }
+        });
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        var gridFranchisee = $('#gridFranchisee').data('kendoGrid');
+        var gridStatement = $('#gridStatement').data('kendoGrid');
+        var gridInvoice = $('#gridInvoice').data('kendoGrid');
+        $("#cbx").click(function () {
+
+            if ($("input#cbx").is(":checked")) {
+                gridFranchisee.showColumn('ProgramID');
+                gridFranchisee.showColumn('MasterID');
+                gridStatement.showColumn('FileName');
+                gridStatement.showColumn('FilePath');
+                gridStatement.showColumn('DateAdded');
+                gridStatement.showColumn('QARoot');
+                gridStatement.showColumn('ProdRoot');
+                gridStatement.showColumn('StatementID');
+                gridStatement.showColumn('ProgramID');
+                gridStatement.showColumn('FranchiseeID');
+                gridStatement.showColumn('MasterID');
+                gridInvoice.showColumn('Copied');
+                gridInvoice.showColumn('ProgramID');
+                gridInvoice.showColumn('masterID');
+                gridInvoice.showColumn('FranchiseeID');
+                gridInvoice.showColumn('OrigFilePath');
+                gridInvoice.showColumn('FilePath');
+            }
+            else {
+                gridFranchisee.hideColumn('ProgramID');
+                gridFranchisee.hideColumn('MasterID');
+                gridStatement.hideColumn('FileName');
+                gridStatement.hideColumn('FilePath');
+                gridStatement.hideColumn('DateAdded');
+                gridStatement.hideColumn('QARoot');
+                gridStatement.hideColumn('ProdRoot');
+                gridStatement.hideColumn('StatementID');
+                gridStatement.hideColumn('ProgramID');
+                gridStatement.hideColumn('FranchiseeID');
+                gridStatement.hideColumn('MasterID');
+                gridInvoice.hideColumn('Copied');
+                gridInvoice.hideColumn('ProgramID');
+                gridInvoice.hideColumn('masterID');
+                gridInvoice.hideColumn('FranchiseeID');
+                gridInvoice.hideColumn('OrigFilePath');
+                gridInvoice.hideColumn('FilePath');
+            }
+        });
+    });
+</script>
+
+<script>
+
+    //Invoice grid Export PDF
+    $(document).ready(function () {
+        $(".k-gridInvoice-Export").on('click', function (e) {
+            var grid = $("#gridInvoice").data("kendoGrid");
+            var trs = $("#gridInvoice").find('tr');
+            var exportAll = true; // Flag to determine whether to export all data
+
+            //when show systems fields is active
+            if ($("input#cbx").is(":checked")) {
+
+                for (var i = 0; i < trs.length; i++) {
+                    if ($(trs[i]).find(":checkbox").is(":checked")) {
+                        exportAll = false; // At least one checkbox is selected, export selected rows
+                        break;
+                    }
+                }
+
+                if (exportAll) {
+
+                    var dataItems = null;
+                    $.ajax({
+                        // url: '/Security/GrantOrRestrictAccess',
+                        url: '@Url.Action("FetchAllInvoice", "Invoice")',
+                        type: 'GET',
+                        cache: false,
+                        traditional: true,
+                        contentType: "application/json;charset=utf-8",
+                        dataType: "json",
+                        async: false,
+                        data: { ProgramID: ProgramID, MasterID: MasterID },
+                        success: function (response) {
+
+                            dataItems = response;
+                        },
+                        error: function () { }
+                    });
+                    // Export all data from all pages
+                    var allRows = [{
+                        cells: [
+                            { value: "InvoiceNo" },
+                            { value: "InvoiceDate" },
+                            { value: "TotalAmount" },
+                            { value: "ViewCount" },
+                            { value: "BilltoCustomerNo" },
+                            { value: "BilltoName" },
+                            { value: "SelltoCustomerNo" },
+                            { value: "StoreID" },
+                            { value: "SelltoCustomerName" },
+                            { value: "SelltoAddress" },
+                            { value: "SelltoCity" },
+                            { value: "SelltoState" },
+                            { value: "SelltoZip" },
+                            { value: "FilePath" },
+                            { value: "OrigFilePath" },
+                            { value: "Copied" },
+                            { value: "ProgramID" },
+                            { value: "MasterID" },
+                            { value: "FranchiseeID" }
+
+                        ]
+                    }];
+                    //var dataItems = grid.dataSource.view();
+                    // var dataItems = grid.dataSource.data();
+                    for (var j = 0; j < dataItems.length; j++) {
+                        var dataItem = dataItems[j];
+                        allRows.push({
+                            cells: [
+                                { value: dataItem.InvoiceNo },
+                                { value: dataItem.InvoiceDate },
+                                { value: dataItem.TotalAmount },
+                                { value: dataItem.ViewCount },
+                                { value: dataItem.BilltoCustomerNo },
+                                { value: dataItem.BilltoName },
+                                { value: dataItem.SelltoCustomerNo },
+                                { value: dataItem.StoreID },
+                                { value: dataItem.SelltoCustomerName },
+                                { value: dataItem.SelltoAddress },
+                                { value: dataItem.SelltoCity },
+                                { value: dataItem.SelltoState },
+                                { value: dataItem.SelltoZip },
+                                { value: dataItem.FilePath },
+                                { value: dataItem.OrigFilePath },
+                                { value: dataItem.Copied },
+                                { value: dataItem.ProgramID },
+                                { value: dataItem.masterID },
+                                { value: dataItem.FranchiseeID }
+                            ]
+                        });
+                    }
+                    excelExport(allRows);
+
+                } else {
+
+                    // Export selected rows
+                    var selectedRows = [{
+                        cells: [
+                            { value: "InvoiceNo" },
+                            { value: "InvoiceDate" },
+                            { value: "TotalAmount" },
+                            { value: "ViewCount" },
+                            { value: "BilltoCustomerNo" },
+                            { value: "BilltoName" },
+                            { value: "SelltoCustomerNo" },
+                            { value: "StoreID" },
+                            { value: "SelltoCustomerName" },
+                            { value: "SelltoAddress" },
+                            { value: "SelltoCity" },
+                            { value: "SelltoState" },
+                            { value: "SelltoZip" },
+                            { value: "FilePath" },
+                            { value: "OrigFilePath" },
+                            { value: "Copied" },
+                            { value: "ProgramID" },
+                            { value: "MasterID" },
+                            { value: "FranchiseeID" }
+                        ]
+                    }];
+                    var dataItems = grid.dataSource.data();
+                    for (var k = 0; k < trs.length; k++) {
+                        if ($(trs[k]).find(":checkbox").is(":checked")) {
+                            var selectedDataItem = grid.dataItem(trs[k]);
+                            var InvoiceDate = selectedDataItem.InvoiceDate.toISOString();
+                            selectedRows.push({
+                                cells: [
+
+                                    { value: selectedDataItem.InvoiceNo },
+                                    { value: InvoiceDate },
+                                    { value: selectedDataItem.TotalAmount },
+                                    { value: selectedDataItem.ViewCount },
+                                    { value: selectedDataItem.BilltoCustomerNo },
+                                    { value: selectedDataItem.BilltoName },
+                                    { value: selectedDataItem.SelltoCustomerNo },
+                                    { value: selectedDataItem.StoreID },
+                                    { value: selectedDataItem.SelltoCustomerName },
+                                    { value: selectedDataItem.SelltoAddress },
+                                    { value: selectedDataItem.SelltoCity },
+                                    { value: selectedDataItem.SelltoState },
+                                    { value: selectedDataItem.SelltoZip },
+                                    { value: selectedDataItem.FilePath },
+                                    { value: selectedDataItem.OrigFilePath },
+                                    { value: selectedDataItem.Copied },
+                                    { value: selectedDataItem.ProgramID },
+                                    { value: selectedDataItem.masterID },
+                                    { value: selectedDataItem.FranchiseeID }
+
+
+                                ]
+                            });
+                        }
+                    }
+                    excelExport(selectedRows);
+                }
+            }
+
+            //when show systems fields is inactive
+            else {
+
+                for (var i = 0; i < trs.length; i++) {
+                    if ($(trs[i]).find(":checkbox").is(":checked")) {
+                        exportAll = false; // At least one checkbox is selected, export selected rows
+                        break;
+                    }
+                }
+
+                if (exportAll) {
+
+                    var dataItems = null;
+                    $.ajax({
+                        // url: '/Security/GrantOrRestrictAccess',
+                        url: '@Url.Action("FetchAllInvoice", "Invoice")',
+                        type: 'GET',
+                        cache: false,
+                        traditional: true,
+                        contentType: "application/json;charset=utf-8",
+                        dataType: "json",
+                        async: false,
+                        data: { ProgramID: ProgramID, MasterID: MasterID },
+                        success: function (response) {
+
+                            dataItems = response;
+                        },
+                        error: function () { }
+                    });
+                    // Export all data from all pages
+                    var allRows = [{
+                        cells: [
+                            { value: "InvoiceNo" },
+                            { value: "InvoiceDate" },
+                            { value: "TotalAmount" },
+                            { value: "ViewCount" },
+                            { value: "BilltoCustomerNo" },
+                            { value: "BilltoName" },
+                            { value: "SelltoCustomerNo" },
+                            { value: "StoreID" },
+                            { value: "SelltoCustomerName" },
+                            { value: "SelltoAddress" },
+                            { value: "SelltoCity" },
+                            { value: "SelltoState" },
+                            { value: "SelltoZip" },
+
+
+                        ]
+                    }];
+                    //var dataItems = grid.dataSource.view();
+                    // var dataItems = grid.dataSource.data();
+                    for (var j = 0; j < dataItems.length; j++) {
+                        var dataItem = dataItems[j];
+                        allRows.push({
+                            cells: [
+                                { value: dataItem.InvoiceNo },
+                                { value: dataItem.InvoiceDate },
+                                { value: dataItem.TotalAmount },
+                                { value: dataItem.ViewCount },
+                                { value: dataItem.BilltoCustomerNo },
+                                { value: dataItem.BilltoName },
+                                { value: dataItem.SelltoCustomerNo },
+                                { value: dataItem.StoreID },
+                                { value: dataItem.SelltoCustomerName },
+                                { value: dataItem.SelltoAddress },
+                                { value: dataItem.SelltoCity },
+                                { value: dataItem.SelltoState },
+                                { value: dataItem.SelltoZip },
+
+                            ]
+                        });
+                    }
+                    excelExport(allRows);
+
+                } else {
+
+                    // Export selected rows
+                    var selectedRows = [{
+                        cells: [
+                            { value: "InvoiceNo" },
+                            { value: "InvoiceDate" },
+                            { value: "TotalAmount" },
+                            { value: "ViewCount" },
+                            { value: "BilltoCustomerNo" },
+                            { value: "BilltoName" },
+                            { value: "SelltoCustomerNo" },
+                            { value: "StoreID" },
+                            { value: "SelltoCustomerName" },
+                            { value: "SelltoAddress" },
+                            { value: "SelltoCity" },
+                            { value: "SelltoState" },
+                            { value: "SelltoZip" },
+
+                        ]
+                    }];
+                    var dataItems = grid.dataSource.data();
+                    for (var k = 0; k < trs.length; k++) {
+                        if ($(trs[k]).find(":checkbox").is(":checked")) {
+                            var selectedDataItem = grid.dataItem(trs[k]);
+                            var InvoiceDate = selectedDataItem.InvoiceDate.toISOString();
+                            selectedRows.push({
+                                cells: [
+
+                                    { value: selectedDataItem.InvoiceNo },
+                                    { value: InvoiceDate },
+                                    { value: selectedDataItem.TotalAmount },
+                                    { value: selectedDataItem.ViewCount },
+                                    { value: selectedDataItem.BilltoCustomerNo },
+                                    { value: selectedDataItem.BilltoName },
+                                    { value: selectedDataItem.SelltoCustomerNo },
+                                    { value: selectedDataItem.StoreID },
+                                    { value: selectedDataItem.SelltoCustomerName },
+                                    { value: selectedDataItem.SelltoAddress },
+                                    { value: selectedDataItem.SelltoCity },
+                                    { value: selectedDataItem.SelltoState },
+                                    { value: selectedDataItem.SelltoZip },
+
+
+
+                                ]
+                            });
+                        }
+                    }
+                    excelExport(selectedRows);
+                }
+            }
+
+        });
+    });
+    function excelExport(rows) {
+        var headerStyle = {
+            background: "#808080", // Grey background color
+            color: "#FFFFFF",      // Text color for better contrast
+            bold: true             // Make the text bold
+        };
+
+        var headerRow = null;
+        if ($("input#cbx").is(":checked")) {
+            headerRow = {
+                cells: [
+                    { value: "InvoiceNo", ...headerStyle },
+                    { value: "InvoiceDate", ...headerStyle },
+                    { value: "TotalAmount", ...headerStyle },
+                    { value: "ViewCount", ...headerStyle },
+                    { value: "BilltoCustomerNo", ...headerStyle },
+                    { value: "BilltoName", ...headerStyle },
+                    { value: "SelltoCustomerNo", ...headerStyle },
+                    { value: "StoreID", ...headerStyle },
+                    { value: "SelltoCustomerName", ...headerStyle },
+                    { value: "SelltoAddress", ...headerStyle },
+                    { value: "SelltoCity", ...headerStyle },
+                    { value: "SelltoState", ...headerStyle },
+                    { value: "SelltoZip", ...headerStyle },
+                    { value: "FilePath", ...headerStyle },
+                    { value: "OrigFilePath", ...headerStyle },
+                    { value: "Copied", ...headerStyle },
+                    { value: "ProgramID", ...headerStyle },
+                    { value: "masterID", ...headerStyle },
+                    { value: "FranchiseeID", ...headerStyle }
+                ]
+            };
+        }
+        else {
+            headerRow = {
+                cells: [
+                    { value: "InvoiceNo", ...headerStyle },
+                    { value: "InvoiceDate", ...headerStyle },
+                    { value: "TotalAmount", ...headerStyle },
+                    { value: "ViewCount", ...headerStyle },
+                    { value: "BilltoCustomerNo", ...headerStyle },
+                    { value: "BilltoName", ...headerStyle },
+                    { value: "SelltoCustomerNo", ...headerStyle },
+                    { value: "StoreID", ...headerStyle },
+                    { value: "SelltoCustomerName", ...headerStyle },
+                    { value: "SelltoAddress", ...headerStyle },
+                    { value: "SelltoCity", ...headerStyle },
+                    { value: "SelltoState", ...headerStyle },
+                    { value: "SelltoZip", ...headerStyle },
+
+                ]
+            };
+        }
+        rows[0] = headerRow;
+        var workbook = new kendo.ooxml.Workbook({
+            sheets: [
+                {
+                    columns: [
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true }
+                    ],
+                    title: "Invoice",
+                    rows: rows
+                }
+            ]
+        });
+        kendo.saveAs({ dataURI: workbook.toDataURL(), fileName: "InvoiceList.xlsx" });
+    }
+
+    //Statement grid Export PDF
+    $(document).ready(function () {
+        $(".k-gridStatement-Export").on('click', function (e) {
+            var gridStatement = $("#gridStatement").data("kendoGrid");
+
+            var trs = $("#gridStatement").find('tr');
+            var exportAll = true;
+
+            //when show systems fields is active
+            if ($("input#cbx").is(":checked")) {
+                for (var i = 0; i < trs.length; i++) {
+                    if ($(trs[i]).find(":checkbox").is(":checked")) {
+                        exportAll = false;
+                        break;
+                    }
+                }
+
+                if (exportAll) {
+                    var dataItems = null;
+                    $.ajax({
+                        // url: '/Security/GrantOrRestrictAccess',
+                        url: '@Url.Action("FetchAllStatement", "Invoice")',
+                        type: 'GET',
+                        cache: false,
+                        traditional: true,
+                        contentType: "application/json;charset=utf-8",
+                        dataType: "json",
+                        async: false,
+                        data: { ProgramID: ProgramID, MasterID: MasterID },
+                        success: function (response) {
+
+                            dataItems = response;
+                        },
+                        error: function () { }
+                    });
+                    // Export all data from all pages
+                    var allRows = [{
+                        cells: [
+                            { value: "Statement" },
+                            { value: "Program" },
+                            { value: "File" },
+                            { value: "Path" },
+                            { value: "DateAdded" },
+                            { value: "QARoot" },
+                            { value: "ProdRoot" },
+                            { value: "StatementID" },
+                            { value: "ProgramID" },
+                            { value: "FranchiseeID" },
+                            { value: "MasterID" }
+
+
+                        ]
+                    }];
+                    //var dataItems = gridStatement.dataSource.view();
+                    //  var dataItems = gridStatement.dataSource.data();
+
+                    for (var j = 0; j < dataItems.length; j++) {
+                        var dataItem = dataItems[j];
+                        var DateAdded = dataItem.DateAdded.toISOString();
+                        allRows.push({
+                            cells: [
+                                { value: dataItem.Statement },
+                                { value: dataItem.Program },
+                                { value: dataItem.FileName },
+                                { value: dataItem.FilePath },
+                                { value: DateAdded },
+                                { value: dataItem.QARoot },
+                                { value: dataItem.ProdRoot },
+                                { value: dataItem.StatementID },
+                                { value: dataItem.ProgramID },
+                                { value: dataItem.FranchiseeID },
+                                { value: dataItem.MasterID },
+
+                            ]
+                        });
+                    }
+                    excelExportStatement(allRows);
+
+                } else {
+                    // Export selected rows
+                    var selectedRows = [{
+                        cells: [
+                            { value: "Statement" },
+                            { value: "Program" },
+                            { value: "File" },
+                            { value: "Path" },
+                            { value: "DateAdded" },
+                            { value: "QARoot" },
+                            { value: "ProdRoot" },
+                            { value: "StatementID" },
+                            { value: "ProgramID" },
+                            { value: "FranchiseeID" },
+                            { value: "MasterID" }
+
+                        ]
+                    }];
+                    for (var k = 0; k < trs.length; k++) {
+                        if ($(trs[k]).find(":checkbox").is(":checked")) {
+                            var selectedDataItem = gridStatement.dataItem(trs[k]);
+                            var DateAdded = selectedDataItem.DateAdded.toISOString();
+                            selectedRows.push({
+                                cells: [
+                                    { value: selectedDataItem.Statement },
+                                    { value: selectedDataItem.Program },
+                                    { value: selectedDataItem.FileName },
+                                    { value: selectedDataItem.FilePath },
+                                    { value: DateAdded },
+                                    { value: selectedDataItem.QARoot },
+                                    { value: selectedDataItem.ProdRoot },
+                                    { value: selectedDataItem.StatementID },
+                                    { value: selectedDataItem.ProgramID },
+                                    { value: selectedDataItem.FranchiseeID },
+                                    { value: selectedDataItem.MasterID },
+
+                                ]
+                            });
+                        }
+                    }
+                    excelExportStatement(selectedRows);
+                }
+            }
+
+            //when show systems fields is inactive
+            else {
+                for (var i = 0; i < trs.length; i++) {
+                    if ($(trs[i]).find(":checkbox").is(":checked")) {
+                        exportAll = false;
+                        break;
+                    }
+                }
+
+                if (exportAll) {
+                    var dataItems = null;
+                    $.ajax({
+                        // url: '/Security/GrantOrRestrictAccess',
+                        url: '@Url.Action("FetchAllStatement", "Invoice")',
+                        type: 'GET',
+                        cache: false,
+                        traditional: true,
+                        contentType: "application/json;charset=utf-8",
+                        dataType: "json",
+                        async: false,
+                        data: { ProgramID: ProgramID, MasterID: MasterID },
+                        success: function (response) {
+
+                            dataItems = response;
+                        },
+                        error: function () { }
+                    });
+                    // Export all data from all pages
+                    var allRows = [{
+                        cells: [
+                            { value: "Statement" },
+                            { value: "Program" },
+
+
+
+                        ]
+                    }];
+                    //var dataItems = gridStatement.dataSource.view();
+                    //  var dataItems = gridStatement.dataSource.data();
+
+                    for (var j = 0; j < dataItems.length; j++) {
+                        var dataItem = dataItems[j];
+                        allRows.push({
+                            cells: [
+                                { value: dataItem.Statement },
+                                { value: dataItem.Program },
+
+
+
+                            ]
+                        });
+                    }
+                    excelExportStatement(allRows);
+
+                } else {
+                    // Export selected rows
+                    var selectedRows = [{
+                        cells: [
+                            { value: "Statement" },
+                            { value: "Program" },
+
+
+
+                        ]
+                    }];
+                    for (var k = 0; k < trs.length; k++) {
+                        if ($(trs[k]).find(":checkbox").is(":checked")) {
+                            var selectedDataItem = gridStatement.dataItem(trs[k]);
+                            selectedRows.push({
+                                cells: [
+                                    { value: selectedDataItem.Statement },
+                                    { value: selectedDataItem.Program },
+
+
+                                ]
+                            });
+                        }
+                    }
+                    excelExportStatement(selectedRows);
+                }
+            }
+        });
+    });
+    function excelExportStatement(rows) {
+        var headerStyle = {
+            background: "#808080", // Grey background color
+            color: "#FFFFFF",      // Text color for better contrast
+            bold: true             // Make the text bold
+        };
+        var headerRow = null;
+        //when show systems fields is active
+        if ($("input#cbx").is(":checked")) {
+            headerRow = {
+                cells: [
+                    { value: "Statement", ...headerStyle },
+                    { value: "Program", ...headerStyle },
+                    { value: "FileName", ...headerStyle },
+                    { value: "FilePath", ...headerStyle },
+                    { value: "DateAdded", ...headerStyle },
+                    { value: "QARoot", ...headerStyle },
+                    { value: "ProdRoot", ...headerStyle },
+                    { value: "StatementID", ...headerStyle },
+                    { value: "ProgramID", ...headerStyle },
+                    { value: "FranchiseeID", ...headerStyle },
+                    { value: "MasterID", ...headerStyle }
+                ]
+            };
+        }
+        //when show systems fields is inactive
+        else {
+
+            headerRow = {
+                cells: [
+                    { value: "Statement", ...headerStyle },
+                    { value: "Program", ...headerStyle },
+
+
+                ]
+            };
+        }
+        rows[0] = headerRow;
+        var workbook = new kendo.ooxml.Workbook({
+            sheets: [
+                {
+                    columns: [
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true }
+                    ],
+                    title: "Statement",
+                    rows: rows
+                }
+            ]
+        });
+        kendo.saveAs({ dataURI: workbook.toDataURL(), fileName: "StatementList.xlsx" });
+    }
+</script>
+<style>
+
+
+    .clickable:hover {
+        color: blue;
+        text-decoration: underline;
+    }
+
+</style>
+
+
+

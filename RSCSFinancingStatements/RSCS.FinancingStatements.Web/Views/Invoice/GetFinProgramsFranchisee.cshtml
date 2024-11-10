@@ -1,0 +1,350 @@
+﻿@{
+    ViewData["Title"] = "GetFinProgramsFranchisee";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var ProgramID = TempData["ProgramID"];
+    ViewData["ProgramID"] = ProgramID;
+  
+
+    
+}
+
+<script>
+ 
+    $(document).ready(function () {
+        var comboBox = $('#cmbFinprogram');
+        comboBox.val(@ViewData["ProgramID"]);
+    });
+</script>
+<div class="panel p-0">
+
+    <div class="gridItem childBorder_00">
+
+        <div>
+            <div class="dropdownItem">
+                @(Html.Kendo().ComboBox()
+                    .Name("cmbFinprogram")
+                    .Label(label => label.Content("Finance Programs :"))
+                    .Filter(FilterType.Contains)
+                    .DataTextField("Description")
+                    .DataValueField("ProgramID")
+                    .DataSource(dataSource =>
+                    {
+                        dataSource.Read("FetchFinprogramsDropdown", "Invoice");
+                    })
+                    .Events(e =>
+                    {
+                        e.Change("onChangeCombo").Select("onSelectCombo");
+                    })
+                    .Suggest(true)
+                    )
+            </div>
+            @(
+
+                Html.Kendo().Grid<RSCS.FinancingStatements.Web.Models.FinProgramsFranchisee>().Name("gridFranch")
+                .Scrollable(s => s.Height(388))
+               // .ToolBar(tools => tools.Excel()).Excel(excel => excel.AllPages(true).FileName("FranchiseeList.xlsx"))
+                .ToolBar(toolbar => toolbar.Custom()
+                .IconClass("k-svg-icon k-svg-i-file-excel k-button-icon")
+                .Text("Export to Excel")
+                .HtmlAttributes(new { @class = "k-toolbar-tool k-grid-excel k-FranchiseeGrid-Export" }))
+                .ToolBar(tools => tools.Pdf()).Pdf(pdf => pdf.AllPages(true).FileName("FranchiseeList.Pdf"))
+                .ToolBar(search => search.Search())
+                .Columns(columns =>
+                {
+
+
+                    columns.Bound(p => p.Reference).Width(200).HtmlAttributes(new { @class = "clickable" });
+                    columns.Bound(p => p.InvoiceAmount).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" });
+                    columns.Bound(p => p.InvoiceStores).Width(100).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" });
+                    columns.Bound(p => p.Invoices).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" });
+                    columns.Bound(p => p.InvoiceDateFrom).Format("{0: MM/dd/yyyy}");
+                    columns.Bound(p => p.InvoiceDateTo).Format("{0: MM/dd/yyyy}");
+                    columns.Bound(p => p.Statements).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" });
+                    columns.Bound(p => p.StatementFrom).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" });
+                    columns.Bound(p => p.StatementTo).Filterable(false).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" });
+                    columns.Bound(p => p.MasterID).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Hidden(true);
+                    columns.Bound(p => p.ProgramID).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Hidden(true).Width(100);
+                })
+
+                .PersistSelection()
+                .Selectable(selectable => selectable.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                .Events(events => events.Change("onChangeGrid"))
+                .Sortable()
+                .Pageable(p =>
+                {
+                    p.PageSizes(new[] { 5, 10, 20, 30, 40, 50 });
+                })
+                .Groupable()
+                .Filterable()
+                .DataSource(dataSource => dataSource
+                .Ajax()
+                .Read(read => read.Action("FetchFinProgramsFranchisee", "Invoice", new { ProgramID = ProgramID }))
+
+                )
+                )
+        </div>
+    </div>
+</div>
+<script>
+
+    var cmbValue;
+    var MasterID;
+    var ProgramID=@ViewData["ProgramID"];
+    function onChangeCombo() {
+        //window.location.href = "/Invoice/GetFinProgramsFranchisee/?ProgramID=" + cmbValue;
+        window.location.href = '@Url.Action("GetFinProgramsFranchisee", "Invoice")?ProgramID=' + cmbValue;
+    }
+
+    function onSelectCombo(e) {
+        if (e.item) {
+            var dataItem = this.dataItem(e.item.index());
+            cmbValue = dataItem.ProgramID;
+        }
+        else {
+            alert("Please select item from the list..");
+        }
+
+    }
+
+    function onChangeGrid(e) {
+        var selectedRow = this.select();
+        var dataItem = this.dataItem(selectedRow);
+        var Franchisee = JSON.stringify(dataItem)
+        ProgramID = dataItem.ProgramID;
+        MasterID = dataItem.MasterID;
+        var pageNumber = $("#gridFranch").data("kendoGrid").dataSource.page();
+        //window.location.href = "/Invoice/GetStatementsInvoice?ProgramID=" + ProgramID + "&MasterID=" + MasterID;
+        window.location.href = '@Url.Action("GetStatementsInvoice", "Invoice")?ProgramID=' + ProgramID + '&MasterID=' + MasterID + "&PN=" + pageNumber;
+    }
+</script>
+<script>
+    $(document).ready(function () {
+        var gridfranch = $('#gridFranch').data('kendoGrid');
+        $("#cbx").click(function () {
+
+            if ($("input#cbx").is(":checked")) {
+                gridfranch.showColumn('MasterID');
+                gridfranch.showColumn('ProgramID');
+            }
+            else {
+                gridfranch.hideColumn('MasterID');
+                gridfranch.hideColumn('ProgramID');
+            }
+        });
+    });
+    $(document).ready(function () {
+        $(".k-FranchiseeGrid-Export").on('click', function (e) {
+            var gridStatement = $("#grid").data("kendoGrid");
+            var dataItems = null;
+           // ProgramID = @ViewData["ProgramID2"];
+            if ($("input#cbx").is(":checked")) {
+            $.ajax({
+                // url: '/Security/GrantOrRestrictAccess',
+                url: '@Url.Action("FetchAllFranchiseeList", "Invoice")',
+                type: 'GET',
+                cache: false,
+                traditional: true,
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                async: false,
+                data: { ProgramID: ProgramID },
+                success: function (response) {
+
+                    dataItems = response;
+                    console.log(dataItems)
+                },
+                error: function () { }
+            });
+            // Export all data from all pages
+           
+            var allRows = [{
+                cells: [
+                    { value: "Reference" },
+                    { value: "Amount" },
+                    { value: "Stores" },
+                    { value: "Invoices" },
+                    { value: "From Inv Date" },
+                    { value: "To Inv Date" },
+                    { value: "#Statements" },
+                    { value: "#From Stmt" },
+                    { value: "#To Stmt" },
+                    { value: "MasterID" },
+                    { value: "ProgramID" },
+
+                   
+
+
+
+
+                ]
+            }];
+            //var dataItems = gridStatement.dataSource.view();
+            //  var dataItems = gridStatement.dataSource.data();
+
+            for (var j = 0; j < dataItems.length; j++) {
+                var dataItem = dataItems[j];
+                allRows.push({
+                    cells: [
+                        { value: dataItem.Reference },
+                        { value: dataItem.InvoiceAmount },
+                        { value: dataItem.InvoiceStores },
+                        { value: dataItem.Invoices },
+                        { value: dataItem.InvoiceDateFrom },
+                        { value: dataItem.InvoiceDateTo },
+                        { value: dataItem.Statements },
+                        { value: dataItem.StatementFrom },
+                        { value: dataItem.StatementTo },
+                        { value: dataItem.MasterID },
+                        { value: dataItem.ProgramID },
+
+                       
+
+
+                    ]
+                });
+            }
+            excelExport(allRows);
+            }
+            else{
+                $.ajax({
+                    // url: '/Security/GrantOrRestrictAccess',
+                    url: '@Url.Action("FetchAllFranchiseeList", "Invoice")',
+                    type: 'GET',
+                    cache: false,
+                    traditional: true,
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "json",
+                    async: false,
+                    data: { ProgramID: ProgramID },
+                    success: function (response) {
+
+                        dataItems = response;
+                        console.log(dataItems)
+                    },
+                    error: function () { }
+                });
+                // Export all data from all pages
+
+                var allRows = [{
+                    cells: [
+                        { value: "Reference" },
+                        { value: "Amount" },
+                        { value: "Stores" },
+                        { value: "Invoices" },
+                        { value: "From Inv Date" },
+                        { value: "To Inv Date" },
+                        { value: "#Statements" },
+                        { value: "#From Stmt" },
+                        { value: "#To Stmt" },
+                   
+
+
+
+
+                    ]
+                }];
+                //var dataItems = gridStatement.dataSource.view();
+                //  var dataItems = gridStatement.dataSource.data();
+
+                for (var j = 0; j < dataItems.length; j++) {
+                    var dataItem = dataItems[j];
+                    allRows.push({
+                        cells: [
+                            { value: dataItem.Reference },
+                            { value: dataItem.InvoiceAmount },
+                            { value: dataItem.InvoiceStores },
+                            { value: dataItem.Invoices },
+                            { value: dataItem.InvoiceDateFrom },
+                            { value: dataItem.InvoiceDateTo },
+                            { value: dataItem.Statements },
+                            { value: dataItem.StatementFrom },
+                            { value: dataItem.StatementTo },
+                      
+
+
+                        ]
+                    });
+                }
+                excelExport(allRows);
+            }
+
+            });
+            });
+    function excelExport(rows) {
+        var headerStyle = {
+            background: "#808080", // Grey background color
+            color: "#FFFFFF",      // Text color for better contrast
+            bold: true             // Make the text bold
+
+        };
+                    
+        var headerRow = null;
+        if ($("input#cbx").is(":checked")) {
+        headerRow = {
+            cells: [
+                { value: "Reference", ...headerStyle },
+                { value: "Amount", ...headerStyle },
+                { value: "Stores", ...headerStyle },
+                { value: "Invoices", ...headerStyle },
+                { value: "From Inv Date", ...headerStyle },
+                { value: "To Inv Date", ...headerStyle },
+                { value: "Statements", ...headerStyle },
+                { value: "From Stmt", ...headerStyle },
+                { value: "To Stmt", ...headerStyle },
+                { value: "MasterID", ...headerStyle },
+                { value: "ProgramID", ...headerStyle }
+            ]
+        };
+        }
+        else
+        {
+            headerRow = {
+                cells: [
+                    { value: "Reference", ...headerStyle },
+                    { value: "Amount", ...headerStyle },
+                    { value: "Stores", ...headerStyle },
+                    { value: "Invoices", ...headerStyle },
+                    { value: "From Inv Date", ...headerStyle },
+                    { value: "To Inv Date", ...headerStyle },
+                    { value: "Statements", ...headerStyle },
+                    { value: "From Stmt", ...headerStyle },
+                    { value: "To Stmt", ...headerStyle },
+                 
+                ]
+            };
+        }
+        rows[0] = headerRow;
+        var workbook = new kendo.ooxml.Workbook({
+            sheets: [
+                {
+                    columns: [
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                       
+                    ],
+                    title: "FranchiseeList",
+                    rows: rows
+                }
+            ]
+        });
+        kendo.saveAs({ dataURI: workbook.toDataURL(), fileName: "FranchiseeList.xlsx" });
+    }
+</script>
+<style>
+
+
+    .clickable:hover {
+        color: blue;
+        text-decoration: underline;
+    }
+
+</style>

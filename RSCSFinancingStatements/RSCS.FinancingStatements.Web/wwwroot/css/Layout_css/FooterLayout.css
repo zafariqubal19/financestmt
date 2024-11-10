@@ -1,0 +1,6 @@
+﻿/**********************************
+FOOTER CSS
+**********************************/
+footer {padding: var(--value_8) 0;margin-top: var(--value_10);border-top: 1px solid var(--color_outline);background: var(--color_white_ffffff);position: relative;z-index: 2;}
+.ftrText {    text-align: center;}
+footer a {color: var(--color_primary) !important; font-weight: 500; cursor: pointer;}

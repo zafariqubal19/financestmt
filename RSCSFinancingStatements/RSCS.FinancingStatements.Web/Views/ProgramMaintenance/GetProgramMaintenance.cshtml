@@ -1,0 +1,689 @@
+﻿@{
+    ViewData["Title"] = "GetFinPrograms";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var updateMessage = TempData["updated"];
+    ViewData["updated"] = updateMessage;
+}
+<script>
+
+    $(document).ready(function () {
+        var compareMsg = '@ViewData["updated"]';
+        if (compareMsg == "Updated") {
+            Swal.fire("Record has been updated successfully.");
+        }
+
+    });
+
+</script>
+
+<form id="myForm" asp-controller="ProgramMaintenance" asp-action="UpdateFinprograms" method="post">
+    <div class="modal fade" id="myProgramMaint">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <input type="hidden" id="programId" name="programId" value="0">
+                            <div class="form-group">
+                                <label>Start Date</label>
+                                <input type="date" class="form-control" name="StartDate" id="StartDate">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>End Date</label>
+                                <input type="date" class="form-control" name="EndDate" id="EndDate">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label aria-placeholder="new">Terms</label>
+                                <input type="text" class="form-control" name="PaymentTermsCode" placeholder="18M">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-group">
+                                <label class="form-check-label">
+                                    <input type="checkbox" class="form-check-input" name="ActiveProcess" id="ActiveProcess">Active Collecting Invocies
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-group">
+                                <label class="form-check-label">
+                                    <input type="checkbox" class="form-check-input" name="ActiveWeb" id="ActiveWeb">Active on websites
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Comment</label>
+                                <textarea class="form-control" name="Comments" placeholder="Write Comments here..."></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-12 align-right pr-4">
+                            <button type="button" id="btnCancel" class="btn btn-secondry mr-1 k-button k-button-md k-rounded-md k-button-solid k-button-solid-base k-toolbar-button k-toolbar-tool">Cancel</button>
+                            <button type="submit" class="btn k-button k-button-md k-rounded-md k-button-solid k-button-solid-base k-toolbar-button k-grid-pdf k-toolbar-tool">Update</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<div class="panel p-0">
+    <div class="gridItem">
+
+        <div>
+
+            @(
+                Html.Kendo().Grid<RSCS.FinancingStatements.Web.Models.FinPrograms>().Name("grid")
+                .Scrollable(s => s.Height(388))
+                //.ToolBar(tools => tools.Excel()).Excel(excel => excel.AllPages(true).FileName("FinProgramsList.xlsx"))
+                .ToolBar(toolbar => toolbar.Custom()
+                .IconClass("k-svg-icon k-svg-i-file-excel k-button-icon")
+                .Text("Export to Excel")
+                .HtmlAttributes(new { @class = "k-toolbar-tool k-grid-excel k-finProgram-Export" }))
+                .ToolBar(tools => tools.Pdf()).Pdf(pdf => pdf.AllPages(true).FileName("FinProgramsList.Pdf"))
+                .ToolBar(search => search.Search())
+                .Columns(columns =>
+                {
+                    columns.Select().Width(40);
+                    columns.Bound(p => p.Description).HtmlAttributes(new { @class = "clickable" }).Width(170);
+                    columns.Bound(p => p.ActiveProcess).Filterable(false).Width(90);
+                    columns.Bound(p => p.ActiveWeb).Filterable(false).Width(90);
+                    columns.Bound(p => p.StartDate).Width(120).Format("{0: MM/dd/yyyy}").HtmlAttributes(new { @id = "startDate" });
+                    columns.Bound(p => p.EndDate).Width(120).Format("{0: MM/dd/yyyy}");
+                    columns.Bound(p => p.PaymentTermsCode).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(100);
+                    columns.Bound(p => p.FranchiseeCount).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Filterable(false).Width(100);
+                    columns.Bound(p => p.StatementFranchiseeCount).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Filterable(false).Width(90);
+                    columns.Bound(p => p.InvoiceCount).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Filterable(false).Width(80);
+                    columns.Bound(p => p.StatementCount).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Filterable(false).Width(90);
+                    columns.Bound(p => p.StoreCount).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Filterable(false).Width(80);
+                    columns.Bound(p => p.FirstStatementPeriod).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Filterable(false).Width(100);
+                    columns.Bound(p => p.LastStatementPeriod).HeaderHtmlAttributes(new { style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Filterable(false).Width(110);
+                    columns.Bound(p => p.FirstInvoice).Width(140).Format("{0: MM/dd/yyyy}");
+                    columns.Bound(p => p.lastInvoice).Width(120).Format("{0: MM/dd/yyyy}");
+                    columns.Bound(p => p.Comments).Filterable(false).Width(100);
+                    columns.Bound(p => p.DateAdded).Width(120).Format("{0: MM/dd/yyyy}");
+                    columns.Bound(p => p.ProgramID).Hidden(true).HeaderHtmlAttributes(new { @class = "", style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(120).Format("{0: MM/dd/yyyy}");
+                    columns.Bound(p => p.CampaignCode).Hidden(true).HeaderHtmlAttributes(new { @class = "", style = "text-align: right; justify-content: right" }).HtmlAttributes(new { @class = "align-right" }).Width(120);
+                })
+                .PersistSelection()
+
+                .Filterable()
+                .Selectable()
+                .Selectable(selectable => selectable.Mode(GridSelectionMode.Single).Type(GridSelectionType.Cell))
+                .Events(events => events.Change("onChange"))
+                .Sortable()
+                .Pageable(p =>
+                {
+                    p.PageSizes(new[] { 5, 10, 20, 30, 40, 50 });
+                    p.Refresh(true);
+                })
+                .Groupable()
+                .DataSource(dataSource => dataSource
+                .Ajax()
+                .Read(read => read.Action("FetchFinprograms", "ProgramMaintenance"))
+
+                )
+                )
+        </div>
+    </div>
+</div>
+<script>
+
+    function formatDate(date) {
+        var month = (date.getMonth() + 1).toString().padStart(2, '0');
+        var day = date.getDate().toString().padStart(2, '0');
+        var year = date.getFullYear().toString();
+        return year + '-' + month + '-' + day;
+    }
+
+    function onChange(e) {
+        var selectedRow = this.select();
+        var row = selectedRow.closest("tr");
+        var selectedRow = this.dataItem(row);
+        var ProgramID = selectedRow.ProgramID;
+        var startDate = formatDate(selectedRow.StartDate);
+        var endDate = formatDate(selectedRow.EndDate);
+        var paymentTermsCode = selectedRow.PaymentTermsCode;
+        var comments = selectedRow.Comments;
+
+        var ActiveWeb = selectedRow.ActiveWeb;
+        var ActiveProcess = selectedRow.ActiveProcess;
+        var checkboxWeb = document.getElementById("ActiveWeb");
+        var checkboxProcess = document.getElementById("ActiveProcess");
+        checkboxWeb.checked = ActiveWeb === "Active";
+        checkboxProcess.checked = ActiveProcess === "Active";
+        $('#myProgramMaint input[name="programId"]').val(ProgramID);
+        //$('#myProgramMaint input[name="ActiveWeb"]').val(checkboxWeb.checked ? "Active" : "Inactive");
+        //$('#myProgramMaint input[name="ActiveProcess"]').val(checkboxWeb.checked ? "Active" : "Inactive");
+        $('#myProgramMaint input[name="StartDate"]').val(startDate);
+        $('#myProgramMaint input[name="EndDate"]').val(endDate);
+        $('#myProgramMaint input[name="PaymentTermsCode"]').val(paymentTermsCode);
+        $('#myProgramMaint textarea[name="Comments"]').val(comments);
+        //$('#myProgramMaint').modal('show')
+
+        //added later to implement export to excel on row selection..
+        var trs = $("#grid").find("tr");
+        var showModel = true;
+        for (var i = 0; i < trs.length; i++) {
+            if ($(trs[i]).find(":checkbox").is(":checked")) {
+                showModel = false;
+                break;
+            }
+        }
+        if (showModel) {
+            $('#myProgramMaint').modal('show');
+            this.dataSource.read()
+        }
+        //added later
+    }
+</script>
+<script>
+    document.getElementById('btnCancel').addEventListener('click', function () {
+        $('#myProgramMaint').modal('hide');
+    });
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/segment-js/1.0.3/segment.min.js"></script>
+<script type="text/javascript" src="https://d3js.org/d3-ease.v0.6.min.js"></script>
+
+<script>
+    (function () {
+
+        var refreshButton = document.querySelector('.refresh-icon');
+        var circlePath = refreshButton.querySelector('.circle-path');
+        var arrowPath = refreshButton.querySelector('.arrow-path');
+        var arrowSvg = refreshButton.querySelector('.arrow-svg');
+        var circleSegment = new Segment(circlePath, '25%', '90%');
+        var arrowSegment = new Segment(arrowPath, '25%', '75%');
+
+        var animating = false;
+        refreshButton.addEventListener('click', function () {
+            if (!animating) {
+                animating = true;
+                triggerAnimation();
+            }
+        }, false);
+
+        function triggerAnimation() {
+            circleSegment.draw('75%', '165%', 0.5, {
+                circular: true, callback: function () {
+                    circleSegment.draw('10%', '90%', 0.2, {
+                        circular: true, callback: function () {
+                            circleSegment.draw('25%', '90%', 1.5, {
+                                circular: true, easing: d3_ease.easeElasticOut.ease, callback: function () {
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            arrowSvg.setAttribute('class', 'arrow-svg arrow-animation');
+
+            arrowSegment.draw('50%', '50% + 0.01', 0.8, {
+                callback: function () {
+                    arrowSegment.draw('25%', '75%', 1.4, {
+                        easing: d3_ease.easeElasticOut.ease, callback: function () {
+                            arrowSvg.setAttribute('class', 'arrow-svg');
+                            animating = false;
+                        }
+                    });
+                }
+            });
+        }
+
+    })();
+
+</script>
+<script>
+    $(document).ready(function () {
+        var gridmaintain = $('#grid').data('kendoGrid');
+        $("#cbx").click(function () {
+            if ($("input#cbx").is(":checked")) {
+                gridmaintain.showColumn('ProgramID');
+                gridmaintain.showColumn('CampaignCode');
+            }
+            else {
+                gridmaintain.hideColumn('ProgramID');
+                gridmaintain.hideColumn('CampaignCode');
+            }
+        });
+    });
+    $(document).ready(function () {
+        $(".k-finProgram-Export").on('click', function (e) {
+            var gridStatement = $("#grid").data("kendoGrid");
+
+            var trs = $("#grid").find('tr');
+            var exportAll = true;
+            //when show systems fields is active
+            if ($("input#cbx").is(":checked")) {
+                for (var i = 0; i < trs.length; i++) {
+                    if ($(trs[i]).find(":checkbox").is(":checked")) {
+                        exportAll = false;
+                        break;
+                    }
+                }
+
+                if (exportAll) {
+                    var dataItems = null;
+                    $.ajax({
+                        // url: '/Security/GrantOrRestrictAccess',
+                        url: '@Url.Action("FetchAllFinPrograms", "ProgramMaintenance")',
+                        type: 'GET',
+                        cache: false,
+                        traditional: true,
+                        contentType: "application/json;charset=utf-8",
+                        dataType: "json",
+                        async: false,
+                        success: function (response) {
+
+                            dataItems = response;
+                        },
+                        error: function () { }
+                    });
+                    // Export all data from all pages
+                    var allRows = [{
+                        cells: [
+                            { value: "Description" },
+                            { value: "ActiveProcess" },
+                            { value: "ActiveWeb" },
+                            { value: "StartDate" },
+                            { value: "EndDate" },
+                            { value: "Terms" },
+                            { value: "#Fran Inv" },
+                            { value: "#Fran Stmt" },
+                            { value: "#Inv" },
+                            { value: "#Stamt" },
+                            { value: "#Stores" },
+                            { value: "From Stmt" },
+                            { value: "To Stmt" },
+                            { value: "From Inv Date" },
+                            { value: "To Inv Date" },
+                            { value: "Comments" },
+                            { value: "DateAdded" },
+                            { value: "ProgramID" },
+                            { value: "CampaignCode" },
+
+
+
+                        ]
+                    }];
+                    //var dataItems = gridStatement.dataSource.view();
+                    //  var dataItems = gridStatement.dataSource.data();
+
+                    for (var j = 0; j < dataItems.length; j++) {
+                        var dataItem = dataItems[j];
+                        allRows.push({
+                            cells: [
+                                { value: dataItem.Description },
+                                { value: dataItem.ActiveProcess },
+                                { value: dataItem.ActiveWeb },
+                                { value: dataItem.StartDate },
+                                { value: dataItem.EndDate },
+                                { value: dataItem.PaymentTermsCode },
+                                { value: dataItem.FranchiseeCount },
+                                { value: dataItem.StatementFranchiseeCount },
+                                { value: dataItem.InvoiceCount },
+                                { value: dataItem.StatementCount },
+                                { value: dataItem.StoreCount },
+                                { value: dataItem.FirstStatementPeriod },
+                                { value: dataItem.LastStatementPeriod },
+                                { value: dataItem.FirstInvoice },
+                                { value: dataItem.lastInvoice },
+                                { value: dataItem.Comments },
+                                { value: dataItem.DateAdded },
+                                { value: dataItem.ProgramID },
+                                { value: dataItem.CampaignCode }
+
+
+                            ]
+                        });
+                    }
+                    excelExport(allRows);
+
+                } else {
+                    var dataItems = null;
+                    $.ajax({
+                        // url: '/Security/GrantOrRestrictAccess',
+                        url: '@Url.Action("FetchAllFinPrograms", "ProgramMaintenance")',
+                        type: 'GET',
+                        cache: false,
+                        traditional: true,
+                        contentType: "application/json;charset=utf-8",
+                        dataType: "json",
+                        async: false,
+                        success: function (response) {
+
+                            dataItems = response;
+                        },
+                        error: function () { }
+                    });
+                    // Export selected rows
+                    var selectedRows = [{
+                        cells: [
+                            { value: "Description" },
+                            { value: "ActiveProcess" },
+                            { value: "ActiveWeb" },
+                            { value: "StartDate" },
+                            { value: "EndDate" },
+                            { value: "Terms" },
+                            { value: "#Fran Inv" },
+                            { value: "#Fran Stmt" },
+                            { value: "#Inv" },
+                            { value: "#Stamt" },
+                            { value: "#Stores" },
+                            { value: "From Stmt" },
+                            { value: "To Stmt" },
+                            { value: "From Inv Date" },
+                            { value: "To Inv Date" },
+                            { value: "Comments" },
+                            { value: "DateAdded" },
+                            { value: "ProgramID" },
+                            { value: "CampaignCode" },
+
+
+                        ]
+                    }];
+
+                    for (var k = 0; k < trs.length; k++) {
+                        if ($(trs[k]).find(":checkbox").is(":checked")) {
+                            var selectedDataItem = dataItems[k-1];// = gridStatement.dataItems(trs[k]);
+
+                            selectedRows.push({
+                                cells: [
+                                    { value: selectedDataItem.Description },
+                                    { value: selectedDataItem.ActiveProcess },
+                                    { value: selectedDataItem.ActiveWeb },
+                                    { value: selectedDataItem.StartDate },
+                                    { value: selectedDataItem.EndDate },
+                                    { value: selectedDataItem.PaymentTermsCode },
+                                    { value: selectedDataItem.FranchiseeCount },
+                                    { value: selectedDataItem.StatementFranchiseeCount },
+                                    { value: selectedDataItem.InvoiceCount },
+                                    { value: selectedDataItem.StatementCount },
+                                    { value: selectedDataItem.StoreCount },
+                                    { value: selectedDataItem.FirstStatementPeriod },
+                                    { value: selectedDataItem.LastStatementPeriod },
+                                    { value: selectedDataItem.FirstInvoice },
+                                    { value: selectedDataItem.lastInvoice },
+                                    { value: selectedDataItem.Comments },
+                                    { value: selectedDataItem.DateAdded },
+                                    { value: selectedDataItem.ProgramID },
+                                    { value: selectedDataItem.CampaignCode }
+
+                                ]
+                            });
+                        }
+                    }
+                    excelExport(selectedRows);
+                }
+            }
+            //when show systems fields is inactive
+            else {
+                for (var i = 0; i < trs.length; i++) {
+                    if ($(trs[i]).find(":checkbox").is(":checked")) {
+                        exportAll = false;
+                        break;
+                    }
+                }
+
+                if (exportAll) {
+                    var dataItems = null;
+                    $.ajax({
+                        // url: '/Security/GrantOrRestrictAccess',
+                        url: '@Url.Action("FetchAllFinPrograms", "ProgramMaintenance")',
+                        type: 'GET',
+                        cache: false,
+                        traditional: true,
+                        contentType: "application/json;charset=utf-8",
+                        dataType: "json",
+                        async: false,
+                        success: function (response) {
+
+                            dataItems = response;
+                        },
+                        error: function () { }
+                    });
+                    // Export all data from all pages
+                    var allRows = [{
+                        cells: [
+                            { value: "Description" },
+                            { value: "ActiveProcess" },
+                            { value: "ActiveWeb" },
+                            { value: "StartDate" },
+                            { value: "EndDate" },
+                            { value: "Terms" },
+                            { value: "#Fran Inv" },
+                            { value: "#Fran Stmt" },
+                            { value: "#Inv" },
+                            { value: "#Stamt" },
+                            { value: "#Stores" },
+                            { value: "From Stmt" },
+                            { value: "To Stmt" },
+                            { value: "From Inv Date" },
+                            { value: "To Inv Date" },
+                            { value: "Comments" },
+                            { value: "DateAdded" },
+
+
+
+
+                        ]
+                    }];
+                    //var dataItems = gridStatement.dataSource.view();
+                    //  var dataItems = gridStatement.dataSource.data();
+
+                    for (var j = 0; j < dataItems.length; j++) {
+                        var dataItem = dataItems[j];
+                        allRows.push({
+                            cells: [
+                                { value: dataItem.Description },
+                                { value: dataItem.ActiveProcess },
+                                { value: dataItem.ActiveWeb },
+                                { value: dataItem.StartDate },
+                                { value: dataItem.EndDate },
+                                { value: dataItem.PaymentTermsCode },
+                                { value: dataItem.FranchiseeCount },
+                                { value: dataItem.StatementFranchiseeCount },
+                                { value: dataItem.InvoiceCount },
+                                { value: dataItem.StatementCount },
+                                { value: dataItem.StoreCount },
+                                { value: dataItem.FirstStatementPeriod },
+                                { value: dataItem.LastStatementPeriod },
+                                { value: dataItem.FirstInvoice },
+                                { value: dataItem.lastInvoice },
+                                { value: dataItem.Comments },
+                                { value: dataItem.DateAdded },
+
+
+
+                            ]
+                        });
+                    }
+                    excelExport(allRows);
+
+                } else {
+                    // Export selected rows
+                    var dataItems = null;
+                    $.ajax({
+                        // url: '/Security/GrantOrRestrictAccess',
+                        url: '@Url.Action("FetchAllFinPrograms", "ProgramMaintenance")',
+                        type: 'GET',
+                        cache: false,
+                        traditional: true,
+                        contentType: "application/json;charset=utf-8",
+                        dataType: "json",
+                        async: false,
+                        success: function (response) {
+
+                            dataItems = response;
+                        },
+                        error: function () { }
+                    });
+                    var selectedRows = [{
+                        cells: [
+                            { value: "Description" },
+                            { value: "ActiveProcess" },
+                            { value: "ActiveWeb" },
+                            { value: "StartDate" },
+                            { value: "EndDate" },
+                            { value: "Terms" },
+                            { value: "#Fran Inv" },
+                            { value: "#Fran Stmt" },
+                            { value: "#Inv" },
+                            { value: "#Stamt" },
+                            { value: "#Stores" },
+                            { value: "From Stmt" },
+                            { value: "To Stmt" },
+                            { value: "From Inv Date" },
+                            { value: "To Inv Date" },
+                            { value: "Comments" },
+                            { value: "DateAdded" },
+
+
+
+
+                        ]
+                    }];
+
+                    for (var k = 0; k < trs.length; k++) {
+                        if ($(trs[k]).find(":checkbox").is(":checked")) {
+                            var selectedDataItem = dataItems[k-1];//gridStatement.dataItem(trs[k]);
+                            selectedRows.push({
+                                cells: [
+                                    { value: selectedDataItem.Description },
+                                    { value: selectedDataItem.ActiveProcess },
+                                    { value: selectedDataItem.ActiveWeb },
+                                    { value: selectedDataItem.StartDate },
+                                    { value: selectedDataItem.EndDate },
+                                    { value: selectedDataItem.PaymentTermsCode },
+                                    { value: selectedDataItem.FranchiseeCount },
+                                    { value: selectedDataItem.StatementFranchiseeCount },
+                                    { value: selectedDataItem.InvoiceCount },
+                                    { value: selectedDataItem.StatementCount },
+                                    { value: selectedDataItem.StoreCount },
+                                    { value: selectedDataItem.FirstStatementPeriod },
+                                    { value: selectedDataItem.LastStatementPeriod },
+                                    { value: selectedDataItem.FirstInvoice },
+                                    { value: selectedDataItem.lastInvoice },
+                                    { value: selectedDataItem.Comments },
+                                    { value: selectedDataItem.DateAdded },
+                                ]
+                            });
+                        }
+                    }
+                    excelExport(selectedRows);
+                }
+
+            }
+        });
+    });
+    function excelExport(rows) {
+        var headerStyle = {
+            background: "#808080", // Grey background color
+            color: "#FFFFFF",      // Text color for better contrast
+            bold: true             // Make the text bold
+        };
+        var headerRow = null;
+        //when show systems fields is active
+        if ($("input#cbx").is(":checked")) {
+            headerRow = {
+                cells: [
+                    { value: "Description", ...headerStyle },
+                    { value: "ActiveProcess", ...headerStyle },
+                    { value: "ActiveWeb", ...headerStyle },
+                    { value: "StartDate", ...headerStyle },
+                    { value: "EndDate", ...headerStyle },
+                    { value: "Terms", ...headerStyle },
+                    { value: "#Fran Inv", ...headerStyle },
+                    { value: "#Fran Stmt", ...headerStyle },
+                    { value: "#Inv", ...headerStyle },
+                    { value: "Stamt", ...headerStyle },
+                    { value: "#Stores", ...headerStyle },
+                    { value: "From Stmt", ...headerStyle },
+                    { value: "To Stmt", ...headerStyle },
+                    { value: "From Inv Date", ...headerStyle },
+                    { value: "To Inv Date", ...headerStyle },
+                    { value: "Comments", ...headerStyle },
+                    { value: "DateAdded", ...headerStyle },
+                    { value: "ProgramID", ...headerStyle },
+                    { value: "CampaignCode", ...headerStyle }
+                ]
+            };
+        }
+        //when show systems fields is inactive
+        else {
+            headerRow = {
+                cells: [
+                    { value: "Description", ...headerStyle },
+                    { value: "ActiveProcess", ...headerStyle },
+                    { value: "ActiveWeb", ...headerStyle },
+                    { value: "StartDate", ...headerStyle },
+                    { value: "EndDate", ...headerStyle },
+                    { value: "Terms", ...headerStyle },
+                    { value: "#Fran Inv", ...headerStyle },
+                    { value: "#Fran Stmt", ...headerStyle },
+                    { value: "#Inv", ...headerStyle },
+                    { value: "Stamt", ...headerStyle },
+                    { value: "#Stores", ...headerStyle },
+                    { value: "From Stmt", ...headerStyle },
+                    { value: "To Stmt", ...headerStyle },
+                    { value: "From Inv Date", ...headerStyle },
+                    { value: "To Inv Date", ...headerStyle },
+                    { value: "Comments", ...headerStyle },
+                    { value: "DateAdded", ...headerStyle },
+
+
+                ]
+            };
+        }
+        rows[0] = headerRow;
+        var workbook = new kendo.ooxml.Workbook({
+            sheets: [
+                {
+                    columns: [
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true },
+                        { autoWidth: true }
+                    ],
+                    title: "FinPrograms",
+                    rows: rows
+                }
+            ]
+        });
+        kendo.saveAs({ dataURI: workbook.toDataURL(), fileName: "FinPrograms.xlsx" });
+    }
+</script>
+<style>
+
+
+    .clickable:hover {
+        color: blue;
+        text-decoration: underline;
+    }
+
+</style>
+
+
+
+
+
